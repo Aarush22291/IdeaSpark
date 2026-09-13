@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
+# Setting Up Locally
+## Cloning the repo
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/founder-srm/IdeaSpark.git ./ideaspark
+cd ideaspark
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Installing Dependencies
+Like `npm` we use a different package manager [bun](https://bun.com/). Click [here](https://bun.com/docs/installation) to install bun.
+```bash
+bun i
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Accessing ENVs
+Click [here](https://docs.doppler.com/docs/install-cli) to install the doppler CLI for your OS.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Once installed, check using the `doppler --version` command.
 
-## Learn More
+### Authenticate:
+```bash
+doppler login
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Project Setup:
+```bash
+# Change to your project's directory
+cd ./ideaspark
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Select project and config
+doppler setup
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Local Dev Server:
+```bash
+doppler run -- bun dev
+```
