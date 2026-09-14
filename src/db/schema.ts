@@ -18,6 +18,11 @@ export const tracks = pgTable("tracks", {
   description: text(),
 });
 
+export const departments = pgTable("departments", {
+  code: varchar({ length: 16 }).primaryKey(),
+  label: varchar({ length: 128 }).notNull().unique(),
+});
+
 export const teams = pgTable("teams", {
   id: serial().primaryKey(),
   name: varchar({ length: 255 }).notNull().unique(),
