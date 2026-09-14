@@ -1,9 +1,9 @@
-// app/actions.ts
 "use server";
-import { neon } from "@neondatabase/serverless";
+
+import { db } from "@/db";
+import { sql } from "drizzle-orm";
 
 export async function getData() {
-  const sql = neon(process.env.DATABASE_URL);
-  const data = await sql`...`;
-  return data;
+  const result = await db.execute(sql`select now() as now`);
+  return result;
 }

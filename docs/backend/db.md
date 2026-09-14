@@ -1,28 +1,39 @@
-# Schemas
-Find your schemas [here](/src/db/schema.ts).
+# IdeaSpark Database
 
-# Seed and Query the Database
-[Documentation](https://orm.drizzle.team/docs/get-started/neon-new#step-7---seed-and-query-the-database).
+The database is PostgreSQL on Neon and is modeled from `IdeaSpark-Backend-PRD.md`.
+Drizzle ORM is the schema/query layer.
 
-# Applying Changes to DB
-You can directly apply changes to your database using the `drizzle-kit push` command.
-```bash
-bunx drizzle-kit push
+## Structure
+
+- `src/db/schema.ts` — enums, tables, foreign keys, uniqueness constraints, partial indexes, and supporting indexes.
+- `src/db/index.ts` — shared Neon/Drizzle database client.
+- `src/db/queries.ts` — read/query helpers for active tracks, teams, submissions, attendance, leaderboard, and active rounds.
+- `src/db/transactions.ts` — transactional write helpers for multi-step state changes.
+- `drizzle/0000_ideaspark_backend.sql` — initial SQL migration for the PRD schema.
+- `scripts/seed.ts` — optional bootstrap of the singleton event config and first super-admin.
+
+## Environment
+
+Set `DATABASE_URL` to the Neon PostgreSQL connection string. Do not commit `.env` or `.env.local`.
+
+Optional seed variables:
+
+```text
+REGISTRATION_DEADLINE=2026-10-01T10:00:00Z
+SUBMISSION_DEADLINE=2026-10-10T10:00:00Z
+REGISTRATION_FEE=1500.00
+BOOTSTRAP_ADMIN_EMAIL=admin@example.com
+BOOTSTRAP_ADMIN_NAME=Event Admin
 ```
-___
 
-TIPS:
-Alternatively, you can generate migrations using the `drizzle-kit generate` command and then apply them using the `drizzle-kit migrate` command:
+## Commands
 
-Generate migrations:
 ```bash
-npx drizzle-kit generate
+bun run db:generate
+bun run db:migrate
+bun run db:push
+bun run db:check
+bun run db:seed
 ```
 
-Apply migrations:
-```bash
-npx drizzle-kit migrate
-```
-
-Read more about migration process in [documentation](https://orm.drizzle.team/docs/kit-overview).
-___
+The repository documents `drizzle-kit push` for direct application during development. Prefer committed migrations for shared/staging/production environments.

@@ -1,3 +1,3 @@
-import { drizzle } from "drizzle-orm/neon-http";
-
-const db = drizzle(process.env.DATABASE_URL);
+export { db } from "@/db";
+export * from "@/db/schema";
+export * from "@/db/queries";

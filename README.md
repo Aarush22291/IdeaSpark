@@ -34,3 +34,6 @@ doppler setup
 ```bash
 doppler run -- bun dev
 ```
+## Database
+
+The IdeaSpark database schema is defined in `src/db/schema.ts` and follows the backend PRD. See `docs/backend/db.md` for migration, seed, and environment instructions.
