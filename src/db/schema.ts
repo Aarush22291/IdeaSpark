@@ -42,19 +42,44 @@ export const teamMembers = pgTable(
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
     name: varchar({ length: 255 }).notNull(),
-    raNumber: varchar({ length: 32 }).notNull(),
+    raNumber: varchar({ length: 32 }).notNull().unique(),
     phone: varchar({ length: 20 }).notNull(),
-    netId: varchar({ length: 64 }).notNull(),
-    department: varchar({ length: 128 }).notNull(),
+    netId: varchar({ length: 64 }).notNull().unique(),
+    department: varchar({ length: 16 })
+      .notNull()
+      .references(() => departments.code),
     faName: varchar({ length: 255 }).notNull(),
     faMobile: varchar({ length: 20 }).notNull(),
     faEmail: varchar({ length: 255 }).notNull(),
-    isPresentDay1: integer().notNull().default(0),
-    isPresentDay2: integer().notNull().default(0),
+    attendanceCode: varchar({ length: 64 }).notNull().unique(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique().on(t.teamId, t.raNumber)],
+  (t) => [index("team_members_teamId_idx").on(t.teamId)],
 );
+
+export const attendance = pgTable(
+  "attendance",
+  {
+    id: serial().primaryKey(),
+    memberId: integer()
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: "cascade" }),
+    eventDate: varchar({ length: 10 }).notNull(), // YYYY-MM-DD
+    scannedBy: text(), // admin user id
+    scannedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.memberId, t.eventDate)],
+);
+
+// singleton: deadlines, fee, feature gates
+export const eventConfig = pgTable("event_config", {
+  id: integer().primaryKey().default(1),
+  registrationDeadline: timestamp({ withTimezone: true }),
+  submissionDeadline: timestamp({ withTimezone: true }),
+  registrationFee: integer().notNull().default(0), // paise
+  resultsReleased: integer().notNull().default(0),
+  updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
 
 export const ideas = pgTable(
   "ideas",

@@ -1,9 +1,11 @@
 "use server";
+import { randomUUID } from "node:crypto";
 import { and, count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
   auditLog,
   departments,
+  eventConfig,
   ideas,
   payments,
   teamMembers,
@@ -68,6 +70,7 @@ export type MemberInput = {
 
 export async function createTeam(name: string, trackId: number) {
   const user = await requireLead();
+  await assertBefore("registrationDeadline");
   if (await getTeamFor(user.id)) throw new Error("You already have a team");
   const [track] = await db.select().from(tracks).where(eq(tracks.id, trackId));
   if (!track) throw new Error("Invalid track");
@@ -96,6 +99,14 @@ async function assertEditable(teamId: number) {
   if (paid > 0) throw new Error("Team is locked after payment approval");
 }
 
+async function assertBefore(
+  field: "registrationDeadline" | "submissionDeadline",
+) {
+  const [cfg] = await db.select().from(eventConfig);
+  if (cfg?.[field] && Date.now() > cfg[field].getTime())
+    throw new Error("Deadline passed");
+}
+
 export async function addMember(input: MemberInput) {
   const user = await requireLead();
   const team = await getTeamFor(user.id);
@@ -114,7 +125,7 @@ export async function addMember(input: MemberInput) {
     throw new Error(`Team is full (max ${MAX_MEMBERS} members)`);
   const [member] = await db
     .insert(teamMembers)
-    .values({ ...input, teamId: team.id })
+    .values({ ...input, teamId: team.id, attendanceCode: randomUUID() })
     .returning();
   await log(user.id, "team.member.add", "team", team.id, {
     memberId: member.id,
@@ -156,6 +167,7 @@ export async function submitIdea(
   round = 1,
 ) {
   const user = await requireLead();
+  await assertBefore("submissionDeadline");
   const team = await getTeamFor(user.id);
   if (!team) throw new Error("Create your team first");
   if (team.status !== "approved")
