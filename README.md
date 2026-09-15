@@ -1,39 +1,43 @@
-# Setting Up Locally
-## Cloning the repo
+# IdeaSpark
+
+## Local setup
+
 ```bash
-git clone https://github.com/founder-srm/IdeaSpark.git ./ideaspark
-cd ideaspark
+bun install
+cp .env.example .env
 ```
 
-## Installing Dependencies
-Like `npm` we use a different package manager [bun](https://bun.com/). Click [here](https://bun.com/docs/installation) to install bun.
+Fill `.env` with the Neon and Managed Auth values for your environment.
+
+## Database workflow
+
 ```bash
-bun i
+bun run db:migrate
+bun run db:seed
+bun run db:verify
 ```
 
-## Accessing ENVs
-Click [here](https://docs.doppler.com/docs/install-cli) to install the doppler CLI for your OS.
+For development-only schema reconciliation:
 
-Once installed, check using the `doppler --version` command.
-
-### Authenticate:
 ```bash
-doppler login
+bun run db:push
 ```
 
-### Project Setup:
-```bash
-# Change to your project's directory
-cd ./ideaspark
+Use versioned migrations for shared, staging and production databases.
 
-# Select project and config
-doppler setup
-```
+## Database architecture
 
-### Local Dev Server:
-```bash
-doppler run -- bun dev
-```
-## Database
+- Neon PostgreSQL is the source of truth.
+- Drizzle ORM defines the schema in `src/db/schema.ts`.
+- `src/db/index.ts` uses a bounded Neon connection pool.
+- `src/db/transactions.ts` contains concurrency-sensitive atomic writes.
+- `src/db/queries.ts` contains reusable read queries.
+- `drizzle/0000_ideaspark_prd_baseline.sql` defines the final schema for a fresh database.
 
-The IdeaSpark database schema is defined in `src/db/schema.ts` and follows the backend PRD. See `docs/backend/db.md` for migration, seed, and environment instructions.
+The newer branch's `departments`, `announcements`, `audit_log`, and Managed Neon Better Auth integration are preserved. The PRD remains the source of truth for team/member identity, submissions, payments, attendance, evaluation rounds, scores and admin roles.
+
+## Safety
+
+The baseline migration is non-destructive: it creates the target schema but does not drop old tables. If a Neon database already contains the earlier experimental schema, inspect the existing data and perform a deliberate data migration before applying this baseline.
+
+Never commit `.env` or database credentials.

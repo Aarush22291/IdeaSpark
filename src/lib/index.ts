@@ -1,3 +1,2 @@
-export { db } from "@/db";
-export * from "@/db/schema";
-export * from "@/db/queries";
+export { db, pool } from "@/db";
+export * as schema from "@/db/schema";

@@ -1,7 +1,3 @@
-import React from 'react'
-
 export default function JudgingPanelPage() {
-  return (
-    <div>JudgingPanelPage</div>
-  )
+  return <div>JudgingPanelPage</div>;
 }

@@ -1,14 +1,14 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { Pool } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
 
-import * as schema from "./schema";
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) throw new Error("DATABASE_URL is not configured");
 
-const databaseUrl = process.env.DATABASE_URL;
+const pool = new Pool({
+  connectionString,
+  max: Number(process.env.DB_POOL_MAX ?? 10),
+});
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not configured");
-}
-
-const sql = neon(databaseUrl);
-
-export const db = drizzle({ client: sql, schema });
+export const db = drizzle({ client: pool });
+export { pool };
+export * as schema from "./schema";

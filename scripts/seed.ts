@@ -1,53 +1,67 @@
 import "dotenv/config";
+import { db, pool } from "../src/db";
+import { admins, departments, eventConfig, tracks } from "../src/db/schema";
+import { OFFICIAL_DEPARTMENTS } from "../src/db/seed-departments";
 
-import { db } from "../src/db";
-import { admins, eventConfig } from "../src/db/schema";
+const departmentRows = OFFICIAL_DEPARTMENTS;
 
-async function main() {
+const trackRows = (process.env.IDEASPARK_TRACKS ?? "")
+  .split(",")
+  .map((x) => x.trim())
+  .filter(Boolean);
+
+await db.transaction(async (tx) => {
+  await tx
+    .insert(departments)
+    .values(departmentRows.map(([code, label]) => ({ code, label })))
+    .onConflictDoNothing();
+
+  if (trackRows.length) {
+    await tx
+      .insert(tracks)
+      .values(trackRows.map((name) => ({ name, isActive: true })))
+      .onConflictDoNothing();
+  }
+
   const registrationDeadline = process.env.REGISTRATION_DEADLINE;
   const submissionDeadline = process.env.SUBMISSION_DEADLINE;
-  const registrationFee = process.env.REGISTRATION_FEE;
-
-  if (registrationDeadline && submissionDeadline && registrationFee) {
-    const registrationDate = new Date(registrationDeadline);
-    const submissionDate = new Date(submissionDeadline);
-
-    if (
-      Number.isNaN(registrationDate.getTime()) ||
-      Number.isNaN(submissionDate.getTime()) ||
-      registrationDate > submissionDate
-    ) {
-      throw new Error("Invalid event deadlines: registration must be <= submission deadline");
-    }
-
-    await db
+  const fee = process.env.REGISTRATION_FEE;
+  if (registrationDeadline && submissionDeadline && fee) {
+    await tx
       .insert(eventConfig)
       .values({
         id: 1,
-        registrationDeadline: registrationDate,
-        submissionDeadline: submissionDate,
-        registrationFee,
+        registrationDeadline: new Date(registrationDeadline),
+        submissionDeadline: new Date(submissionDeadline),
+        registrationFee: fee,
+        resultsPublished: false,
       })
-      .onConflictDoNothing({ target: eventConfig.id });
+      .onConflictDoUpdate({
+        target: eventConfig.id,
+        set: {
+          registrationDeadline: new Date(registrationDeadline),
+          submissionDeadline: new Date(submissionDeadline),
+          registrationFee: fee,
+          updatedAt: new Date(),
+        },
+      });
   }
 
-  const adminEmail = process.env.BOOTSTRAP_ADMIN_EMAIL;
-  const adminName = process.env.BOOTSTRAP_ADMIN_NAME;
-  if (adminEmail && adminName) {
-    await db
-      .insert(admins)
-      .values({
-        email: adminEmail,
-        name: adminName,
-        role: "super_admin",
-      })
-      .onConflictDoNothing({ target: admins.email });
+  const email = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
+  const name = process.env.BOOTSTRAP_ADMIN_NAME?.trim();
+  const role = process.env.BOOTSTRAP_ADMIN_ROLE as
+    | "super_admin"
+    | "evaluator"
+    | "volunteer"
+    | undefined;
+
+  if (email && name && role) {
+    await tx.insert(admins).values({ email, name, role }).onConflictDoUpdate({
+      target: admins.email,
+      set: { name, role },
+    });
   }
-
-  console.log("IdeaSpark database seed completed.");
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
 });
+
+console.log("IdeaSpark database seed completed");
+await pool.end();
